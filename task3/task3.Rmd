@@ -1,0 +1,76 @@
+---
+title: "SQL exercise - Task 3"
+description: |
+  Calculate basic statistics about your measurements.
+author:
+  - name: Mirko Mälicke
+    url: https://hyd.iwg.kit.edu/personen_maelicke.php
+    affiliation: Karlsruhe Institute for Technology (KIT)
+    affiliation_url: https://hyd.iwg.kit.edu
+date: "`r Sys.Date()`"
+output:  
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  radix::radix_article:
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# install packages if missing
+if (!("RPostgreSQL" %in% installed.packages())){
+  install.packages("RPostgreSQL")
+}
+if (!("getPass" %in% installed.packages())){
+  install.packages("getPass")
+}
+
+# load packages
+require(RPostgreSQL)
+require(getPass)
+
+# establish the connection
+drv <- dbDriver('PostgreSQL')
+con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
+                 password=getPass('Provide the password'), dbname='datamanagement')
+```
+
+## Solution
+
+The first part of the task is considered to be finished when the follwong query produces meaningful output:
+
+```{sql connection=con}
+SELECT * FROM indices
+```
+
+Additionally, add either a R chunk to produce the output map or include the map exported from QGis as an image file.
+
+
+## Hints
+
+There is also an aggregation function in PostgreSQL that can be used in <span style="color: blue">GROUP BY</span> statements.
+The median of all temperatures avaiable in the table can be calculated like:
+```{sql connection=con}
+select percentile_cont(0.5) within group (order by temperature)
+from raw_data
+```
+
+Remember that omitting the grouping statement will aggregate all records. Of course you can set a custom group by statement.
+```{sql connection=con}
+select
+  hobo_id,
+  percentile_cont(0.5) within group (order by temperature) as "Median"
+from raw_data
+GROUP BY hobo_id
+```
+
+
