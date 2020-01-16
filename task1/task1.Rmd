@@ -63,8 +63,7 @@ intermediate_df <- data.frame(date=as.Date("2000-01-01"), hour=0, th=0.0, origin
 # read in all quality checked data and append previous data frame
 for (id in hobo_ids) {
   path <- paste("https://raw.githubusercontent.com/data-hydenv/data/master/hobo/2020/_02hourly/",as.character(id),"_Th.tsv", sep="")
-  hobo_df <- read_tsv("https://raw.githubusercontent.com/data-hydenv/data/master/hobo/2020/_02hourly/10347359_Th.tsv",
-                      col_types = "Dndc")  # reading in
+  hobo_df <- read_tsv(path, col_types = "Dndc")  # reading in
   hobo_df <- hobo_df %>% mutate(hobo_id=id)  # adding column with id
   intermediate_df <- rbind(intermediate_df, hobo_df)  # appending
 }
