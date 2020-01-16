@@ -44,6 +44,44 @@ con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide th
                  password=getPass('Provide the password'), dbname='datamanagement')
 ```
 
+```{r}
+# PREPARING THE DATA TO BE APPENDED TO THE QUALITY_CHECKED TABLE
+
+# load necessary packages
+library(tidyverse)
+library(lubridate)
+
+# create a list with all relevant HOBO IDs (there night be a more fancy way to do this)
+hobo_ids = c(10132405, 10234636, 10347312, 10347319, 10347346, 10347351, 10347357, 10347359, 10347364,
+             10347367, 10347386, 10347391, 10349994, 10350004, 10350007, 10350009, 10350032, 10350033,
+             10350043, 10350048, 10350066, 10350070, 10350083, 10350084, 10350090, 10350099, 10350105,
+             10610853, 10760706, 10760763, 10760820, 10801134)
+
+# make a data frame with correct column types and one dummy entry (maybe just create an empty data frame with right column types)
+intermediate_df <- data.frame(date=as.Date("2000-01-01"), hour=0, th=0.0, origin="dummy", hobo_id=0, stringsAsFactors=FALSE)
+
+# read in all quality checked data and append previous data frame
+for (id in hobo_ids) {
+  path <- paste("https://raw.githubusercontent.com/data-hydenv/data/master/hobo/2020/_02hourly/",as.character(id),"_Th.tsv", sep="")
+  hobo_df <- read_tsv("https://raw.githubusercontent.com/data-hydenv/data/master/hobo/2020/_02hourly/10347359_Th.tsv",
+                      col_types = "Dndc")  # reading in
+  hobo_df <- hobo_df %>% mutate(hobo_id=id)  # adding column with id
+  intermediate_df <- rbind(intermediate_df, hobo_df)  # appending
+}
+
+# format the data frame in the same way as the quality_checked table (might be a bit awkward, but it works)
+final_df <- intermediate_df %>%
+  filter(!(origin=="dummy")) %>%  # delete dummy entry
+  mutate(date_h = paste(as.character(date), as.character(hour))) %>%  # throw date and time together as string
+  mutate(tstamp = as.POSIXct(date_h, format = "%Y-%m-%d %H")) %>%  # convert into right format
+  select(hobo_id, tstamp, value=th)  # select important columns
+
+# TODO: it might be good to make some tests, if all data is correctly read in!
+
+# appending the fancy old quality_checked table, not sure what happens if this code is run again!
+dbWriteTable(con, 'quality_checked', final_df, append=TRUE, row.names=FALSE)
+```
+
 ## Solution
 
 This task is considered to be finished when the chunk below is producing meaningful output
