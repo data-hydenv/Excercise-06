@@ -17,3 +17,7 @@ A *possible* workflow could look like:
 You can create as many branches as you need. When finished, plese clean up all you branches by deleting them **after** merged into the master branch. Only a ``master`` and a ``clean-*`` branch should be left.
 
 Github offers so called projects and (sub)-team, which if used can make any decision making within the group fairly transparent. 
+
+Please put your name in the table with the 4 tasks for the groups:
+https://docs.google.com/spreadsheets/d/1jOMLBlAiDwNceFCqvnptygjewFzQnyvgrPpci8o-LSU/edit?usp=sharing
+
