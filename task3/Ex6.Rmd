@@ -44,7 +44,8 @@ select * from test limit 5
 select 
 hobo_id,
 avg(temperature) as mean_day,
-variance(temperature) as var_day
+variance(temperature) as var_day,
+percentile_cont(0.9) within group (order by temperature) as perc_90_day
 from raw_data 
 where date_part('hour', tstamp) >= 6 and date_part('hour', tstamp) < 18
 group by hobo_id
@@ -55,7 +56,8 @@ group by hobo_id
 select 
 hobo_id,
 avg(temperature) as mean_night,
-variance(temperature) as var_night
+variance(temperature) as var_night,
+percentile_cont(0.9) within group (order by temperature) as perc_90_night
 from raw_data 
 where date_part('hour', tstamp) < 6 or date_part('hour', tstamp) >= 18
 group by hobo_id
