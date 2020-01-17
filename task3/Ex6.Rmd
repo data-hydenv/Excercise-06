@@ -49,14 +49,27 @@ select * from test limit 5
 ```
 
 ```{sql connection=con}
-select hobo_id, 
-  avg(temperature) as mean, 
-  min(temperature) as min, 
-  max(temperature) as max
-from raw_data
+select 
+hobo_id,
+avg(temperature) as mean_day,
+variance(temperature) as var_day
+from raw_data 
+where date_part('hour', tstamp) >= 6 and date_part('hour', tstamp) < 18
 group by hobo_id
-order by hobo_id DESC
+
 ```
+
+```{sql connection=con}
+select 
+hobo_id,
+avg(temperature) as mean_night,
+variance(temperature) as var_night
+from raw_data 
+where date_part('hour', tstamp) < 6 or date_part('hour', tstamp) >= 18
+group by hobo_id
+
+```
+
 
 ```{sql connection=con}
 select * from temperatur_indices
