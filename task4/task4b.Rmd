@@ -74,8 +74,10 @@ avg_hobo_2020 <- hobo_2020_checked %>%
                             mini = min(value),
                             maxi = max(value))%>% 
                   ungroup()
+```
 
 
+```{r}
 ggplot(data = avg_hobo_2020) + neutral + 
   geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), fill = "forestgreen", alpha = .5, ) +
   geom_line(aes(x = tstamp, y = mn), lwd = 1) +
@@ -89,5 +91,5 @@ ggplot(data = avg_hobo_2020) + neutral +
 ggplot(data = avg_hobo_2020) + neutral + 
   geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), alpha = 0.5, fill = "blue") +
   geom_line(aes(x = tstamp, y = md), col = "black", lwd = 1) + # median
-  labs(title = "Median Temperature with 5 & 95 Percentile Interval", x = "Date", y = "Temperature °C")
+  labs(title = "Median Temperature with 5 & 95 Percentile Interval", x = "Date", y = "Temperature ?C")
 ```
