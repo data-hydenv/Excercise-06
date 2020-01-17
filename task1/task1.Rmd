@@ -103,3 +103,6 @@ WHERE h.year = 2020
 GROUP BY h.hobo_id
 ```
 
+```{r}
+dbDisconnect(con)
+```
