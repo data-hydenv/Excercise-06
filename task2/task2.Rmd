@@ -58,6 +58,26 @@ This task is considered to be finished when the chunk below is producing the out
 SELECT * FROM overview
 ```
 
+## hobos within 2km radius query
+
+```{sql connection=con}
+SELECT hobo_id,
+  st_astext(st_buffer(st_transform(geom, 25832), 2000)) as "hobos_within_2km"
+FROM hobos
+
+```
+
+## hobos within 2km radius query in 2019
+
+```{sql connection=con}
+SELECT hobo_id,
+  st_astext(st_buffer(st_transform(geom, 25832), 2000)) as "hobos_within_2km",
+  year
+FROM hobos WHERE year = 2019
+
+```
+
+
 ## Hints
 
 The follwoing chunks might help you to get started.
