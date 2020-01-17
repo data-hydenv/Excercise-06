@@ -3,17 +3,8 @@ title: "Exercise6 - Task4"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
-
-```{r cars}
-summary(cars)
-```
-
-
+## Load packages
+Check if needed packages are installed and loaded.
 ```{r, echo=FALSE}
 if (!("RPostgreSQL" %in% installed.packages())){
   install.packages("RPostgreSQL")
@@ -25,6 +16,7 @@ require(RPostgreSQL)
 require(getPass)
 ```
 
+## Connect to Server
 ```{r}
 drv <- dbDriver('PostgreSQL')
 con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
