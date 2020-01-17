@@ -85,3 +85,9 @@ ggplot(data = avg_hobo_2020) + neutral +
 ```
 
 
+```{r}
+ggplot(data = avg_hobo_2020) + neutral + 
+  geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), alpha = 0.5, fill = "blue") +
+  geom_line(aes(x = tstamp, y = md), col = "black", lwd = 1) + # median
+  labs(title = "Median Temperature with 5 & 95 Percentile Interval", x = "Date", y = "Temperature °C")
+```
