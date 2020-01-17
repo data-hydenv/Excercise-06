@@ -77,6 +77,12 @@ final_df <- intermediate_df %>%
 
 # TODO: it might be good to make some tests, if all data is correctly read in!
 
+View(final_df)
+```
+
+```{r}
+# UPLOADING ON DATABASE
+
 # appending the fancy old quality_checked table, not sure what happens if this code is run again!
 dbWriteTable(con, 'quality_checked', final_df, append=TRUE, row.names=FALSE)
 ```
