@@ -23,19 +23,12 @@ con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide th
                  password=getPass('Provide the password'), dbname='datamanagement')
 
 ```
-
+##See available tables
 ```{r}
 dbListTables(con)
 ```
 
-```{sql connection=con}
-create view test as select id, hobo_id from hobos where id=2
-```
-
-```{sql connection=con}
-select * from test limit 5
-```
-
+##Create mean, variance, percentile for day
 ```{sql connection=con}
 select 
 hobo_id,
@@ -47,7 +40,7 @@ where date_part('hour', tstamp) >= 6 and date_part('hour', tstamp) < 18
 group by hobo_id
 
 ```
-
+##Create mean, variance, percentile for night
 ```{sql connection=con}
 select 
 hobo_id,
