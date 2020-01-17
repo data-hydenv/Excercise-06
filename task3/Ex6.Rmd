@@ -28,6 +28,15 @@ con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide th
 dbListTables(con)
 ```
 
+##Create view
+```{sql connection=con}
+create view test as select id, hobo_id from hobos where id=2
+```
+
+```{sql connection=con}
+select * from test limit 5
+```
+
 ##Create mean, variance, percentile for day
 ```{sql connection=con}
 select 
@@ -53,6 +62,10 @@ group by hobo_id
 
 ```
 
+
+```{sql connection=con}
+select * from temperatur_indices
+```
 
 
 
