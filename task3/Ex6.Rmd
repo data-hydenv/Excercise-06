@@ -29,10 +29,6 @@ dbListTables(con)
 ```
 
 ```{sql connection=con}
-select * from raw_data where hobo_id=2
-```
-
-```{sql connection=con}
 create view test as select id, hobo_id from hobos where id=2
 ```
 
