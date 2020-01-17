@@ -54,9 +54,5 @@ group by hobo_id
 ```
 
 
-```{sql connection=con}
-select * from temperatur_indices
-```
-
 
 
