@@ -1,0 +1,79 @@
+---
+title: "Exercise6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r, echo=FALSE}
+if (!("RPostgreSQL" %in% installed.packages())){
+  install.packages("RPostgreSQL")
+}
+if (!("getPass" %in% installed.packages())){
+  install.packages("getPass")
+}
+require(RPostgreSQL)
+require(getPass)
+```
+
+```{r}
+drv <- dbDriver('PostgreSQL')
+con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
+                 password=getPass('Provide the password'), dbname='datamanagement')
+
+```
+
+```{r}
+dbListTables(con)
+```
+
+```{sql connection=con}
+select * from raw_data where hobo_id=2
+```
+
+```{sql connection=con}
+create view test as select id, hobo_id from hobos where id=2
+```
+
+```{sql connection=con}
+select * from test limit 5
+```
+
+```{sql connection=con}
+select hobo_id, 
+  avg(temperature) as mean, 
+  min(temperature) as min, 
+  max(temperature) as max
+from raw_data
+group by hobo_id
+order by hobo_id DESC
+```
+
+```{sql connection=con}
+select * from temperatur_indices
+```
+
+
+
