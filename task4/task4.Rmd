@@ -48,6 +48,7 @@ con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide th
 
 *put your results here*
 
+
 ## Hints
 
 The results might be hard to interpret if you just load all data into R. Therefore you can try to load the results from 
