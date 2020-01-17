@@ -1,12 +1,10 @@
 ---
-title: "SQL exercise - Task 4"
+title: "SQL exercise - Task 4b"
 description: |
   Load data from PostgreSQL and create impressive plots.
 author:
-  - name: Mirko Mälicke
-    url: https://hyd.iwg.kit.edu/personen_maelicke.php
-    affiliation: Karlsruhe Institute for Technology (KIT)
-    affiliation_url: https://hyd.iwg.kit.edu
+  - name: Niklas Toensing,
+          Lena Schemel
 date: "`r Sys.Date()`"
 output:  
   html_document:
@@ -75,18 +73,14 @@ avg_hobo_2020 <- hobo_2020_checked %>%
                             q95 = quantile(value, 0.95, type = 1),
                             mini = min(value),
                             maxi = max(value))%>% 
-                  #summarise(median = median(value)) %>% 
                   ungroup()
 
 
 ggplot(data = avg_hobo_2020) + neutral + 
-  #geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), alpha = 0.2) +
-  #geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), col = "red") +
-  geom_line(aes(x = tstamp, y = mn), col = "red") +
-  geom_line(aes(x = tstamp, y = md), col = "blue") + 
-  #geom_point(aes(x = tstamp, y = mini)) +
-  #geom_point(aes(x = tstamp, x = maxi)) +
-  labs(title = "Mean and median temperature", x = "Date", y = "Temperature °C")
+  geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), fill = "forestgreen", alpha = .5, ) +
+  geom_line(aes(x = tstamp, y = mn), lwd = 1) +
+  geom_point(data = hobo_2020_checked, aes(x = tstamp, y = value), pch = ".") +
+  labs(title = "Mean temperature and min max Interval", x = "Date", y = "Temperature °C")
 
 ```
 
