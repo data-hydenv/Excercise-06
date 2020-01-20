@@ -39,6 +39,7 @@ select * from test limit 5
 
 ##Create mean, variance, percentile for day
 ```{sql connection=con}
+create table day_ind as
 select 
 hobo_id,
 avg(temperature) as mean_day,
@@ -51,6 +52,7 @@ group by hobo_id
 ```
 ##Create mean, variance, percentile for night
 ```{sql connection=con}
+create table night_ind as
 select 
 hobo_id,
 avg(temperature) as mean_night,
