@@ -102,4 +102,15 @@ ON day.hobo=night.hobo
 LEFT JOIN hobos
 ON hobos.id = night.hobo
 ```
-
+##Join districts with indices
+```{sql connection=con}
+SELECT name AS district,
+  avg(mean_day) AS mean_day,
+  avg(var_day) AS var_day,
+  avg(perc_90_day) AS perc_90_day,
+  avg(mean_night) AS mean_night,
+  avg(var_night) AS var_night,
+  avg(perc_90_night) AS perc_90_night
+  FROM (SELECT * FROM indices join districts on st_within(indices.geom, districts.geom)) AS test
+  GROUP BY name
+```
