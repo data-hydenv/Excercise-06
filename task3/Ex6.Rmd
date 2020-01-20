@@ -98,5 +98,7 @@ LEFT JOIN
     where date_part('hour', tstamp) >= 6 and date_part('hour', tstamp) < 18
     group by hobo_id) day
 ON day.hobo_id = night.hobo_id
+LEFT JOIN hobos
+ON hobos.id = night.hobo_id
 ```
 
