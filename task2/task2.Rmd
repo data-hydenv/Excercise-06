@@ -58,6 +58,91 @@ This task is considered to be finished when the chunk below is producing the out
 SELECT * FROM overview
 ```
 
+## See tables in db
+
+```{r}
+dbListTables(con)
+```
+
+
+## create overview table
+
+```{sql connection=con}
+CREATE TABLE overview(
+hobo_id integer,
+raw_data integer,
+checked_data integer,
+hobos_within_2km_2020 integer,
+hobos_within_2km integer,
+used_in_2020 boolean,
+used_in_2018 boolean,
+used_in_2017 boolean
+)
+```
+
+## fill overview
+
+```{sql connection=con}
+INSERT INTO overview
+SELECT DISTINCT hobo_id AS hobo_id FROM hobos
+UNION 
+SELECT count(DISTINCT hobo_id) AS raw_data FROM raw_data
+UNION
+SELECT SUM(amount) FROM 
+(SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked
+UNION
+SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked_2020
+) AS checked_data
+UNION
+SELECT count(st_astext(st_buffer(st_transform(geom, 25832), 2000))) AS hobos_within_2km_2020
+FROM hobos WHERE year = 2020
+UNION
+SELECT count(st_astext(st_buffer(st_transform(geom, 25832), 2000))) AS hobos_within_2km
+FROM hobos
+UNION
+SELECT year = 2020 IS TRUE AS used_in_2020 FROM hobos
+UNION
+SELECT year = 2018 IS TRUE AS used_in_2018 FROM hobos
+UNION
+SELECT year = 2017 IS TRUE AS used_in_2017 FROM hobos
+```
+
+## count of no raw data 
+
+```{sql connection=con}
+
+SELECT count(DISTINCT hobo_id) AS amount FROM raw_data
+```
+
+## count no of quality checked data
+```{sql connection=con}
+SELECT SUM(amount) FROM 
+(SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked
+UNION ALL
+SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked_2020
+) AS res
+```
+
+## hobos within 2km radius query in 2020
+
+```{sql connection=con}
+SELECT count(st_astext(st_buffer(st_transform(geom, 25832), 2000))) as hobos_within_2km_2020
+FROM hobos WHERE year = 2020
+```
+
+## hobos within 2km radius query
+
+```{sql connection=con}
+SELECT count(st_astext(st_buffer(st_transform(geom, 25832), 2000))) as hobos_within_2km
+FROM hobos
+```
+
+## used in year
+
+```{sql connection=con}
+SELECT year = 2020 IS TRUE AS used_in_2020,  year = 2018 IS TRUE AS used_in_2018, year = 2017 IS TRUE AS used_in_2017 FROM hobos
+```
+
 ## Hints
 
 The follwoing chunks might help you to get started.
