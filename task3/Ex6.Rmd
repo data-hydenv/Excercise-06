@@ -69,6 +69,16 @@ select * from day_ind
 JOIN night_ind ON day_ind.hobo_id=night_ind.hobo_id
 ```
 
+```{sql connection=con}
+select * 
+from day_ind
+INNER JOIN night_ind
+ON day_ind.hobo_id = night_ind.hobo_id
+LEFT JOIN hobos
+ON hobos.id = night_ind.hobo_id
+
+```
+
 
 ```{sql connection=con}
 select * from temperatur_indices
