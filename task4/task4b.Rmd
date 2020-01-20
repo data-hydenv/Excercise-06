@@ -79,6 +79,7 @@ avg_hobo_2020 <- hobo_2020_checked %>%
 
 
 ```{r}
+#plot min and max values with mean
 ggplot(data = avg_hobo_2020) + neutral + 
   geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), fill = "forestgreen", alpha = .5, ) +
   geom_line(aes(x = tstamp, y = mn), lwd = 1) +
@@ -91,6 +92,7 @@ ggplot(data = avg_hobo_2020) + neutral +
 
 
 ```{r}
+#plot 5th and 95th percentile with median 
 ggplot(data = avg_hobo_2020) + neutral + 
   geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), alpha = 0.5, fill = "blue") +
   geom_line(aes(x = tstamp, y = md), col = "black", lwd = 1) + # median
