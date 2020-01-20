@@ -78,24 +78,26 @@ LEFT JOIN hobos
 ON hobos.id = night_ind.hobo_id
 
 ```
-##All in one
+##ALL in one
 ```{sql connection=con}
-SELECT id, hobo_id, radiation_influence, geom, description, year, srid, created_at, updated_at, mean_day, var_day, perc_90_day, mean_night, var_night, perc_90_night from 
-(select hobo_id as hobo, 
-  avg(temperature) as mean_day,
-  variance(temperature) as var_day,
-  percentile_cont(0.9) within group (order by temperature) as perc_90_day
-from raw_data 
-where date_part('hour', tstamp) >= 6 and date_part('hour', tstamp) < 18
-group by hobo_id) as day
+CREATE VIEW indices AS
+SELECT id, hobo_id, radiation_influence, geom, description, year, srid, created_at, updated_at, mean_day, var_day, perc_90_day, mean_night, var_night, perc_90_night
+FROM
+  (SELECT hobo_id AS hobo, 
+    avg(temperature) AS mean_day,
+    variance(temperature) AS var_day,
+    percentile_cont(0.9) within GROUP (ORDER BY temperature) AS perc_90_day
+    FROM raw_data 
+    WHERE date_part('hour', tstamp) >= 6 AND date_part('hour', tstamp) < 18
+    GROUP BY hobo_id) AS day
 INNER JOIN 
-(select hobo_id as hobo, 
-  avg(temperature) as mean_night,
-  variance(temperature) as var_night,
-  percentile_cont(0.9) within group (order by temperature) as perc_90_night
-from raw_data 
-where date_part('hour', tstamp) < 6 or date_part('hour', tstamp) >= 18
-group by hobo_id) as night
+  (SELECT hobo_id AS hobo, 
+    avg(temperature) AS mean_night,
+    variance(temperature) AS var_night,
+    percentile_cont(0.9) within GROUP (ORDER BY temperature) AS perc_90_night
+    FROM raw_data 
+    WHERE date_part('hour', tstamp) < 6 OR date_part('hour', tstamp) >= 18
+    GROUP BY hobo_id) AS night
 ON day.hobo=night.hobo
 LEFT JOIN hobos
 ON hobos.id = night.hobo
