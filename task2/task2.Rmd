@@ -124,17 +124,24 @@ SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked_2020
 ```
 
 ## hobos within 2km radius query in 2020
-
 ```{sql connection=con}
-SELECT count(st_astext(st_buffer(st_transform(geom, 25832), 2000))) as hobos_within_2km_2020
-FROM hobos WHERE year = 2020
+select a.id, count(b.hobo_id) as km
+from 
+    hobos a, hobos b 
+where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id and b.year = 2020 and a. year = 2020
+group by a.id order by id desc
+
 ```
 
 ## hobos within 2km radius query
 
 ```{sql connection=con}
-SELECT count(st_astext(st_buffer(st_transform(geom, 25832), 2000))) as hobos_within_2km
-FROM hobos
+select a.id, count(b.hobo_id) as km
+from 
+    hobos a, hobos b 
+where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id 
+group by a.id order by id desc
+
 ```
 
 ## used in year
