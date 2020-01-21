@@ -5,7 +5,8 @@ description: |
 author:
   - name: Niklas Toensing,
           Lena Schemel,
-          Jonas Pyschik
+          Jonas Pyschik,
+          Paulina Mederos
 date: "`r Sys.Date()`"
 output:  
   html_document:
