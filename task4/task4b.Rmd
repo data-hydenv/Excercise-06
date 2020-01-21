@@ -81,13 +81,9 @@ avg_hobo_2020 <- hobo_2020_checked %>%
 ```{r}
 #plot min and max values with mean
 ggplot(data = avg_hobo_2020) + neutral + 
-  geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), fill = "dodgerblue3", alpha = .3 ) +
-  geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), fill = "dodgerblue4", alpha = .4 ) +
-  geom_line(aes(x = tstamp, y = md), color = "grey30", lwd = 0.8, alpha = 0.5) + 
-  geom_line(aes(x = tstamp, y = mn), alpha = 1, lwd = 0.3) +
-      #geom_line(data = hobo_2020_checked, aes(x = tstamp, y = value), color = "forestgreen", lwd = 0.1) +
-  geom_line(data = filter(hobo_2020_checked, hobo_id == 10350032), aes(x = tstamp, y = value), color = "gold", linetype = "dotted") +
-  geom_line(data = filter(hobo_2020_checked, hobo_id == 10347346), aes(x = tstamp, y = value), color = "gold", linetype = "dotted") +
+  geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), fill = "dodgerblue3", alpha = .4 ) +
+  geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), fill = "dodgerblue4", alpha = .5 ) +
+  geom_line(aes(x = tstamp, y = mn), alpha = 1, lwd = 0.5) +
   labs(title = "Mean temperature and Interval of 2020 Hobos", x = "Date", y = "Temperature °C", color = "Legend")
 
 ```
@@ -96,13 +92,14 @@ ggplot(data = avg_hobo_2020) + neutral +
 ```{r}
 #plot 5th and 95th percentile with median 
 ggplot(data = avg_hobo_2020) + neutral + 
-  geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), alpha = 0.5, fill = "blue") +
-  geom_line(aes(x = tstamp, y = md), col = "black", lwd = 1) + # median
+   geom_ribbon(aes(x = tstamp, ymin = mini, ymax = maxi), fill = "dodgerblue3", alpha = .4 ) +
+  geom_ribbon(aes(x = tstamp, ymin = q5, ymax = q95), fill = "dodgerblue4", alpha = .5 ) +
+  geom_line(aes(x = tstamp, y = md), col = "black", lwd = 0.5) + # median
   labs(title = "Median Temperature with 5 & 95 Percentile Interval", x = "Date", y = "Temperature °C")
 ```
 
 
 
 ```{r}
-disconnect(con)
+dbDisconnect(con)
 ```
