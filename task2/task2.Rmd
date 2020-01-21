@@ -46,8 +46,8 @@ require(getPass)
 
 # establish the connection
 drv <- dbDriver('PostgreSQL')
-con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user="data2020", 
-                 password="psqlrocks", dbname='datamanagement')
+con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
+                 password=getPass('Provide the password'), dbname='datamanagement')
 ```
 
 ## Solution
