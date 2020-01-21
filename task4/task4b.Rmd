@@ -6,7 +6,7 @@ author:
   - name: Niklas Toensing,
           Lena Schemel,
           Jonas Pyschik,
-          Paulina Mederos^,
+          Paulina Mederos,
           Amadeus Langheinrich
 date: "`r Sys.Date()`"
 output:  
