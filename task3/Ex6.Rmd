@@ -12,8 +12,20 @@ if (!("RPostgreSQL" %in% installed.packages())){
 if (!("getPass" %in% installed.packages())){
   install.packages("getPass")
 }
+if (!("tmap" %in% installed.packages())){
+  install.packages("tmap")
+}
+if (!("sf" %in% installed.packages())){
+  install.packages("sf")
+}
+if (!("tidyverse" %in% installed.packages())){
+  install.packages("tidyverse")
+}
 require(RPostgreSQL)
 require(getPass)
+require(tmap)
+require(sf)
+require(tidyverse)
 ```
 
 ## Connect to Server
