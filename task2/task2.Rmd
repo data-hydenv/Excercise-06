@@ -46,8 +46,8 @@ require(getPass)
 
 # establish the connection
 drv <- dbDriver('PostgreSQL')
-con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
-                 password=getPass('Provide the password'), dbname='datamanagement')
+con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user="data2020", 
+                 password="psqlrocks", dbname='datamanagement')
 ```
 
 ## Solution
@@ -164,6 +164,28 @@ group by a.id order by km2 desc
 
 ```
 
+## second try to join
+```{sql connection = con}
+select hobo_id, amount_raw, km, km_2020
+FROM 
+  (SELECT hobo_id, count(*) AS amount_raw from raw_data group by hobo_id) t1
+left JOIN
+  (select a.id as id_first, count(b.hobo_id) as km 
+    from hobos a, hobos b 
+    where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id 
+    group by a.id) t2 
+on (t1.hobo_id = t2.id_first)
+left join 
+  (select a.id as id_second, count(b.hobo_id) as km_2020
+    from 
+    hobos a, hobos b 
+    where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) 
+    and a.hobo_id != b.hobo_id and b.year = 2020 and a. year = 2020
+    group by a.id) t3
+on (t3.id_second = t2.id_first)
+
+order by hobo_id desc
+```
 
 ## Hints
 
