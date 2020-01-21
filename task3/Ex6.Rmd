@@ -114,6 +114,11 @@ tm_shape(hobo_inter) +
   tm_layout(title = "mean day")
    
 ```
+##Selected indice
+As the average day temperature is the most intuitive parameter, it was chosen for visualisation. It creates a good overview over the spatial distribution. However, there are several uncertainties influencing the average day temperature, like the exposition, shielding etc. Therefore, a combination of mean, variance and 90th percentile would show a more complete picture.
+
+##Does the spatial aggregation to districts change the overall picture?
+The overall picture is definitely changed by the spatial aggregation. The amount of hobos per district varies as well as the area of the different districts. Especially in large suburban district with few hobos, one outlier can dominate a large area. On the other hand, a lot of measurements took place in smaller districts in the city center, which might therefore be more reliable but only represent a small area.
 
 ### mean night
 ```{r}
