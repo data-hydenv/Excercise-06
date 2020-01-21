@@ -110,17 +110,19 @@ SELECT year = 2017 IS TRUE AS used_in_2017 FROM hobos
 ## count of no raw data 
 
 ```{sql connection=con}
-
-SELECT count(DISTINCT hobo_id) AS amount FROM raw_data
+SELECT t2.hobo_id, count(*) AS raw_data
+FROM 
+  raw_data t1
+LEFT JOIN 
+  (SELECT id, hobo_id FROM hobo) t2
+ON  t1.hobo_id = t2.id
+GROUP BY t2.hobo_id 
+-- SELECT hobo_id, count(*) AS raw_data from raw_data group by hobo_id
 ```
 
 ## count no of quality checked data
 ```{sql connection=con}
-SELECT SUM(amount) FROM 
-(SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked
-UNION ALL
-SELECT count(DISTINCT hobo_id) AS amount FROM quality_checked_2020
-) AS res
+SELECT hobo_id, count(*) AS checked_data FROM quality_checked GROUP BY hobo_id ORDER BY hobo_id ASC
 ```
 
 ## hobos within 2km radius query in 2020
@@ -136,13 +138,41 @@ group by a.id order by id desc
 ## hobos within 2km radius query
 
 ```{sql connection=con}
-select a.id, count(b.hobo_id) as km
+SELECT a.hobo_id, count(b.hobo_id) AS within
+FROM 
+    (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) a,
+    (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) b 
+WHERE st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) AND a.hobo_id != b.hobo_id 
+GROUP BY a.hobo_id 
+ORDER BY hobo_id DESC
+```
+```{sql connection = con}
+
+SELECT a.hobo_id, b.hobo_id AS b_id, st_asewkt(b.geom) AS geom
+FROM 
+    (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) a,
+    (SELECT hobo_id, geom AS geom FROM hobo) b 
+WHERE st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) AND a.hobo_id = 10350083
+ORDER BY b_id DESC
+
+```
+
+
+
+```{sql connection = con}
+
+select *
 from 
     hobos a, hobos b 
 where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id 
-group by a.id order by id desc
 
 ```
+## union geometries of hobo devices
+```{sql connection = con}
+SELECT hobo_id, st_astext(st_union(geom)) AS geom FROM hobo GROUP BY hobo_id
+```
+
+
 
 ## used in year
 
@@ -166,9 +196,9 @@ group by a.id order by km2 desc
 
 ## second try to join
 ```{sql connection = con}
-select hobo_id, amount_raw, km, km_2020
+select hobo_id as HOBO_id, raw_data, km as hobos_within_2km, km_2020 hobos_within_2km_2020
 FROM 
-  (SELECT hobo_id, count(*) AS amount_raw from raw_data group by hobo_id) t1
+  (SELECT hobo_id, count(*) AS raw_data from raw_data group by hobo_id) t1
 left JOIN
   (select a.id as id_first, count(b.hobo_id) as km 
     from hobos a, hobos b 
