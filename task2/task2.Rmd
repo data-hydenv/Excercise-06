@@ -149,6 +149,21 @@ group by a.id order by id desc
 ```{sql connection=con}
 SELECT year = 2020 IS TRUE AS used_in_2020,  year = 2018 IS TRUE AS used_in_2018, year = 2017 IS TRUE AS used_in_2017 FROM hobos
 ```
+## first try to join
+```{sql connection=con}
+SELECT distinct a.id, count(distinct r.*), count(distinct b.id) as km2, count(distinct c.id) as km2_2020,a.year=2020 is TRUE as year_2020, a.year=2019 is TRUE as year_2019
+FROM hobos a
+left JOIN hobos b ON ST_DWithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.id!=b.id
+	
+left JOIN hobos c ON ST_DWithin(st_transform(a.geom, 25832), st_transform(c.geom, 25832), 2000) and a.year =2020 and c.year =2020 and a.id!=c.id
+left join raw_data r on r.hobo_id = a.id
+ 
+
+  
+group by a.id order by km2 desc
+
+```
+
 
 ## Hints
 
