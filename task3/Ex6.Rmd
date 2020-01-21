@@ -65,20 +65,20 @@ SELECT name AS district,
   GROUP BY name
 ```
 
-##Make maps
+##Make map
 
 ### load data
-### indices
+#### indices
 ```{sql connection=con, output.var ="hobo"}
 select id, hobo_id, year, mean_day, var_day, perc_90_day, mean_night, var_night, perc_90_night, st_asewkt(st_transform(geom, 25832)) as "UTM" 
 from indices 
 ```
-### freiburg districts
+#### freiburg districts
 ```{sql connection=con, output.var="fr_dis"}
 select id, name, st_asewkt(st_transform(geom, 25832)) as "UTM" 
 from districts 
 ```
-### freiburg districts indices
+#### freiburg districts indices
 ```{sql connection=con, output.var = "fr_dis_indi"}
 SELECT name,
   avg(mean_day) AS mean_day,
@@ -94,93 +94,31 @@ SELECT name,
 ```{r}
 library(tmap)
 library(sf)
-#hobo <- dbReadTable(con, 'indices')
-#fr_dis <- dbReadTable(con, 'districts')
+library(tidyverse)
 fr_dis_indi <- left_join(fr_dis_indi, fr_dis, by = c("name"))
-fr_dis_indi_sf <- st_as_sf(fr_dis_indi, wkt = "UTM.x")
+fr_dis_indi_sf <- st_as_sf(fr_dis_indi, wkt = "UTM")
 hobo_sf <- st_as_sf(hobo, wkt = "UTM")
 fr_dis_sf <- st_as_sf(fr_dis, wkt = "UTM")
+hobo_inter <- st_intersection(hobo_sf, fr_dis_sf)
 ```
 
-### mean day
+### mean day map
 ```{r}
+class_breaks <- c(floor(seq(min(hobo_inter$mean_day), max(hobo_inter$mean_day), length.out = 8)),12)
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("mean_day", style = "jenks", title = "District") +
+  tm_fill("mean_day", style = "cont", breaks = class_breaks, legend.show = F) +
   tm_borders() +
     tm_text("name", just = "top") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "mean_day", shape = 21, size = 0.4, style = "jenks", 
-          title = "HOBO") +
+  tm_dots(col = "mean_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks, title = "Temp. [°C]") +
   tm_layout(title = "mean day")
    
 ```
+
 ##Selected indice
 As the average day temperature is the most intuitive parameter, it was chosen for visualisation. It creates a good overview over the spatial distribution. However, there are several uncertainties influencing the average day temperature, like the exposition, shielding etc. Therefore, a combination of mean, variance and 90th percentile would show a more complete picture.
 
 ##Does the spatial aggregation to districts change the overall picture?
 The overall picture is definitely changed by the spatial aggregation. The amount of hobos per district varies as well as the area of the different districts. Especially in large suburban district with few hobos, one outlier can dominate a large area. On the other hand, a lot of measurements took place in smaller districts in the city center, which might therefore be more reliable but only represent a small area.
 
-### mean night
-```{r}
-tm_shape(fr_dis_indi_sf) +
-  tm_fill("mean_night", style = "jenks", title = "District") +
-  tm_borders() +
-    tm_text("name", just = "top") +
-tm_shape(hobo_inter) +
-  tm_dots(col = "mean_night", shape = 21, size = 0.4, style = "jenks", 
-          title = "HOBO") +
-  tm_layout(title = "mean night")
-   
-```
-
-### var day
-```{r}
-tm_shape(fr_dis_indi_sf) +
-  tm_fill("var_day", style = "jenks", title = "District") +
-  tm_borders() +
-    tm_text("name", just = "top") +
-tm_shape(hobo_inter) +
-  tm_dots(col = "var_day", shape = 21, size = 0.4, style = "jenks", 
-          title = "HOBO") +
-  tm_layout(title = "variance day")
-   
-```
-
-### var night
-```{r}
-tm_shape(fr_dis_indi_sf) +
-  tm_fill("var_night", style = "jenks", title = "District") +
-  tm_borders() +
-    tm_text("name", just = "top") +
-tm_shape(hobo_inter) +
-  tm_dots(col = "var_night", shape = 21, size = 0.4, style = "jenks", 
-          title = "HOBO") +
-  tm_layout(title = "variance night")
-   
-```
-
-### perc_90 night
-```{r}
-tm_shape(fr_dis_indi_sf) +
-  tm_fill("perc_90_night", style = "jenks", title = "District") +
-  tm_borders() +
-    tm_text("name", just = "top") +
-tm_shape(hobo_inter) +
-  tm_dots(col = "perc_90_night", shape = 21, size = 0.4, style = "jenks", 
-          title = "HOBO") +
-  tm_layout(title = "Perc 90 night")
-   
-```
-
-### perc_90 day
-```{r}
-tm_shape(fr_dis_indi_sf) +
-  tm_fill("perc_90_day", style = "jenks", title = "District") +
-  tm_borders() +
-    tm_text("name", just = "top") +
-tm_shape(hobo_inter) +
-  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "jenks", 
-          title = "HOBO") +
-  tm_layout(title = "Perc 90 day")
-   
-```
