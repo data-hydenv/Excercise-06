@@ -134,3 +134,9 @@ As the average day temperature is the most intuitive parameter, it was chosen fo
 ##Does the spatial aggregation to districts change the overall picture?
 The overall picture is definitely changed by the spatial aggregation. The amount of hobos per district varies as well as the area of the different districts. Especially in large suburban district with few hobos, one outlier can dominate a large area. On the other hand, a lot of measurements took place in smaller districts in the city center, which might therefore be more reliable but only represent a small area.
 
+# cleanup
+```{r}
+dbDisconnect(con)
+```
+
+
