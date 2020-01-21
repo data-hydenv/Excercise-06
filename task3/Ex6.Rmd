@@ -28,57 +28,7 @@ con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide th
 dbListTables(con)
 ```
 
-##Create view
-```{sql connection=con}
-create view test as select id, hobo_id from hobos where id=2
-```
-
-```{sql connection=con}
-select * from test limit 5
-```
-
-##Create mean, variance, percentile for day
-```{sql connection=con}
-create table day_ind as
-select 
-hobo_id,
-avg(temperature) as mean_day,
-variance(temperature) as var_day,
-percentile_cont(0.9) within group (order by temperature) as perc_90_day
-from raw_data 
-where date_part('hour', tstamp) >= 6 and date_part('hour', tstamp) < 18
-group by hobo_id
-
-```
-##Create mean, variance, percentile for night
-```{sql connection=con}
-create table night_ind as
-select 
-hobo_id,
-avg(temperature) as mean_night,
-variance(temperature) as var_night,
-percentile_cont(0.9) within group (order by temperature) as perc_90_night
-from raw_data 
-where date_part('hour', tstamp) < 6 or date_part('hour', tstamp) >= 18
-group by hobo_id
-
-```
-
-```{sql connection=con}
-select * from day_ind
-JOIN night_ind ON day_ind.hobo_id=night_ind.hobo_id
-```
-
-```{sql connection=con}
-select * 
-from day_ind
-INNER JOIN night_ind
-ON day_ind.hobo_id = night_ind.hobo_id
-LEFT JOIN hobos
-ON hobos.id = night_ind.hobo_id
-
-```
-##ALL in one
+##Create view on hobos with temperature indices
 ```{sql connection=con}
 CREATE VIEW indices AS
 SELECT id, hobo_id, radiation_influence, geom, description, year, srid, created_at, updated_at, mean_day, var_day, perc_90_day, mean_night, var_night, perc_90_night
@@ -114,6 +64,7 @@ SELECT name AS district,
   FROM (SELECT * FROM indices join districts on st_within(indices.geom, districts.geom)) AS test
   GROUP BY name
 ```
+
 ##Make maps
 
 ### load data
