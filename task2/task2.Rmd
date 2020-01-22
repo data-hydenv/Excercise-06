@@ -58,12 +58,12 @@ This task is considered to be finished when the chunk below is producing the out
 SELECT * FROM overview
 ```
 
+
 ## See tables in db
 
 ```{r}
 dbListTables(con)
 ```
-
 
 
 ## count nr of raw data:
@@ -76,23 +76,18 @@ LEFT JOIN
   (SELECT id, hobo_id FROM hobo) t2
 ON  t1.hobo_id = t2.id
 GROUP BY t2.hobo_id 
--- SELECT hobo_id, count(*) AS raw_data from raw_data group by hobo_id
 ```
+
 
 ## count nr of quality checked data:
 ```{sql connection=con}
 SELECT hobo_id, count(*) AS checked_data FROM quality_checked GROUP BY hobo_id ORDER BY hobo_id ASC
 ```
 
-select a.id, count(b.hobo_id) as km
-from 
-    hobos a, hobos b 
-where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id and b.year = 2020 and a. year = 2020
-group by a.id order by id desc
 
 ## hobos within 2km radius query in 2020
 ```{sql connection=con}
-SELECT a.hobo_id, count(b.hobo_id) AS within
+SELECT a.hobo_id, count(b.hobo_id) AS within_2020
 FROM 
     (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) a,
     (SELECT hobo_id, st_union(geom) AS geom, year FROM hobo GROUP BY hobo_id, year) b 
@@ -100,6 +95,7 @@ WHERE st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000)
 GROUP BY a.hobo_id 
 ORDER BY hobo_id DESC
 ```
+
 
 ## hobos within 2km radius query
 
@@ -113,35 +109,56 @@ GROUP BY a.hobo_id
 ORDER BY hobo_id DESC
 ```
 
+
 ## used in year
 
 ```{sql connection=con}
-SELECT year = 2020 IS TRUE AS used_in_2020,  year = 2018 IS TRUE AS used_in_2018, year = 2017 IS TRUE AS used_in_2017 FROM hobos
+SELECT hobo_id, year = 2020 AS used_in_2020,  year = 2018 AS used_in_2018, year = 2017 AS used_in_2017 FROM hobos
 ```
 
-## join queries
+
+## join queries and create view
 ```{sql connection = con}
-select hobo_id as HOBO_id, raw_data, km as hobos_within_2km, km_2020 hobos_within_2km_2020
+CREATE VIEW overview AS
+SELECT raw.hobo_id, raw.raw_data, checked.checked_data, w_2020.within_2020 AS within_2k_2020, w.within AS within_2k,
+u.used_in_2020, u.used_in_2018, u.used_in_2017
 FROM 
-  (SELECT hobo_id, count(*) AS raw_data from raw_data group by hobo_id) t1
-left JOIN
-  (select a.id as id_first, count(b.hobo_id) as km 
-    from hobos a, hobos b 
-    where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id 
-    group by a.id) t2 
-on (t1.hobo_id = t2.id_first)
-left join 
-  (select a.id as id_second, count(b.hobo_id) as km_2020
-    from 
-    hobos a, hobos b 
-    where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) 
-    and a.hobo_id != b.hobo_id and b.year = 2020 and a. year = 2020
-    group by a.id) t3
-on (t3.id_second = t2.id_first)
+  (SELECT t2.hobo_id, count(*) AS raw_data FROM raw_data t1
+   LEFT JOIN 
+    (SELECT id, hobo_id FROM hobo) t2
+   ON  t1.hobo_id = t2.id
+   GROUP BY t2.hobo_id) raw
 
-order by hobo_id desc
-```
+LEFT JOIN
+  (SELECT hobo_id, count(*) AS checked_data FROM quality_checked GROUP BY hobo_id) checked
+ON raw.hobo_id = checked.hobo_id
 
+LEFT JOIN
+  (SELECT a.hobo_id, count(b.hobo_id) AS within_2020
+   FROM 
+    (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) a,
+    (SELECT hobo_id, st_union(geom) AS geom, year FROM hobo GROUP BY hobo_id, year) b 
+   WHERE st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000)
+   AND a.hobo_id != b.hobo_id AND b.year = 2020
+   GROUP BY a.hobo_id) w_2020
+ON raw.hobo_id = w_2020.hobo_id
+
+LEFT JOIN
+  (SELECT a.hobo_id, count(b.hobo_id) AS within
+   FROM 
+    (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) a,
+    (SELECT hobo_id, st_union(geom) AS geom, year FROM hobo GROUP BY hobo_id, year) b 
+   WHERE st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) AND a.hobo_id != b.hobo_id
+   GROUP BY a.hobo_id) w
+ON raw.hobo_id = w.hobo_id
+
+LEFT JOIN
+  (SELECT hobo_id, year = 2020 AS used_in_2020,  year = 2018 AS used_in_2018, year = 2017 AS used_in_2017 FROM hobos) u
+ON raw.hobo_id = u.hobo_id
+
+```   
+   
+   
 ## some helper queries to figure out stuff:
 
 ```{sql connection = con}
