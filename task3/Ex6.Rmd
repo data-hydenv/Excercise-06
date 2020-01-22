@@ -148,13 +148,13 @@ tm_shape(fr_dis_indi_sf) +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
   tm_dots(col = "mean_night", shape = 21, size = 0.4, style = "cont", 
-          breaks = class_breaks2, title = "Temp. [°C]") +
+          breaks = class_breaks2, title = "Temp. [°C]", midpoint = NA) +
   tm_layout(title = "mean night")
    
 ```
 #Variance day
 ```{r}
-class_breaks3 <- c(floor(seq(min(hobo_inter$var_day, na.rm = T), max(hobo_inter$var_day, na.rm = T), length.out = 8)))
+class_breaks3 <- c(floor(seq(min(hobo_inter$var_day, na.rm = T)-1, max(hobo_inter$var_day, na.rm = T)+1, length.out = 8)))
 tm_shape(fr_dis_indi_sf) +
   tm_fill("var_day", style = "cont", breaks = class_breaks3, legend.show = F) +
   tm_borders() +
@@ -169,7 +169,7 @@ tm_shape(hobo_inter) +
 
 #Variance night
 ```{r}
-class_breaks4 <- c(floor(seq(min(hobo_inter$var_night), max(hobo_inter$var_night), length.out = 8)))
+class_breaks4 <- c(floor(seq(min(hobo_inter$var_night)-1, max(hobo_inter$var_night)+1, length.out = 8)))
 tm_shape(fr_dis_indi_sf) +
   tm_fill("var_night", style = "cont", breaks = class_breaks4, legend.show = F) +
   tm_borders() +
@@ -182,7 +182,7 @@ tm_shape(hobo_inter) +
 ```
 #90th percetil day
 ```{r}
-class_breaks5 <- c(floor(seq(min(hobo_inter$perc_90_day), max(hobo_inter$perc_90_day), length.out = 8)))
+class_breaks5 <- c(floor(seq(min(hobo_inter$perc_90_day)-1, max(hobo_inter$perc_90_day)+1, length.out = 8)))
 tm_shape(fr_dis_indi_sf) +
   tm_fill("perc_90_day", style = "cont", breaks = class_breaks5, legend.show = F) +
   tm_borders() +
@@ -195,13 +195,13 @@ tm_shape(hobo_inter) +
 ```
 #90th percentil night
 ```{r}
-class_breaks6 <- c(floor(seq(min(hobo_inter$perc_90_night), max(hobo_inter$perc_90_night), length.out = 8)))
+class_breaks6 <- c(floor(seq(min(hobo_inter$perc_90_night)-1, max(hobo_inter$perc_90_night)+1, length.out = 8)))
 tm_shape(fr_dis_indi_sf) +
   tm_fill("perc_90_night", style = "cont", breaks = class_breaks6, legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "cont", 
+  tm_dots(col = "perc_90_night", shape = 21, size = 0.4, style = "cont", 
           breaks = class_breaks6, title = "Temp. [°C]") +
   tm_layout(title = "percentile 90 night")
    
