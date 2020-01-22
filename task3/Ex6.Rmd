@@ -21,11 +21,13 @@ if (!("sf" %in% installed.packages())){
 if (!("tidyverse" %in% installed.packages())){
   install.packages("tidyverse")
 }
-require(RPostgreSQL)
-require(getPass)
-require(tmap)
-require(sf)
-require(tidyverse)
+#if the installation of tmap package doesn't work like that, it has to be installed manually
+
+library(RPostgreSQL)
+library(getPass)
+library(tmap)
+library(sf)
+library(tidyverse)
 ```
 
 ## Connect to Server
@@ -33,7 +35,6 @@ require(tidyverse)
 drv <- dbDriver('PostgreSQL')
 con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
                  password=getPass('Provide the password'), dbname='datamanagement')
-
 ```
 ##See available tables
 ```{r}
@@ -64,6 +65,12 @@ ON day.hobo=night.hobo
 LEFT JOIN hobos
 ON hobos.id = night.hobo
 ```
+
+#Take a look at the created view
+```{sql connection=con}
+SELECT * FROM indices
+```
+
 ##Join districts with indices
 ```{sql connection=con}
 SELECT name AS district,
@@ -104,9 +111,6 @@ SELECT name,
 ```
 ### creat sf objects
 ```{r}
-library(tmap)
-library(sf)
-library(tidyverse)
 fr_dis_indi <- left_join(fr_dis_indi, fr_dis, by = c("name"))
 fr_dis_indi_sf <- st_as_sf(fr_dis_indi, wkt = "UTM")
 hobo_sf <- st_as_sf(hobo, wkt = "UTM")
@@ -120,7 +124,7 @@ class_breaks <- c(floor(seq(min(hobo_inter$mean_day), max(hobo_inter$mean_day), 
 tm_shape(fr_dis_indi_sf) +
   tm_fill("mean_day", style = "cont", breaks = class_breaks, legend.show = F) +
   tm_borders() +
-    tm_text("name", just = "top") +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
   tm_dots(col = "mean_day", shape = 21, size = 0.4, style = "cont", 
           breaks = class_breaks, title = "Temp. [°C]") +
@@ -134,9 +138,76 @@ As the average day temperature is the most intuitive parameter, it was chosen fo
 ##Does the spatial aggregation to districts change the overall picture?
 The overall picture is definitely changed by the spatial aggregation. The amount of hobos per district varies as well as the area of the different districts. Especially in large suburban district with few hobos, one outlier can dominate a large area. On the other hand, a lot of measurements took place in smaller districts in the city center, which might therefore be more reliable but only represent a small area.
 
+#Maps of other indices:
+#mean night map
+```{r}
+class_breaks2 <- c(floor(seq(min(hobo_inter$mean_night), max(hobo_inter$mean_night), length.out = 8)),12)
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("mean_night", style = "cont", breaks = class_breaks2, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "mean_night", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks2, title = "Temp. [°C]") +
+  tm_layout(title = "mean night")
+   
+```
+#Variance day
+```{r}
+class_breaks3 <- c(floor(seq(min(hobo_inter$var_day, na.rm = T), max(hobo_inter$var_day, na.rm = T), length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("var_day", style = "cont", breaks = class_breaks3, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "var_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks3, title = "Variance [T²]") +
+  tm_layout(title = "var day")
+   
+```
+
+
+#Variance night
+```{r}
+class_breaks4 <- c(floor(seq(min(hobo_inter$var_night), max(hobo_inter$var_night), length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("var_night", style = "cont", breaks = class_breaks4, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "var_night", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks4, title = "Variance [T²]") +
+  tm_layout(title = "var night")
+   
+```
+#90th percetil day
+```{r}
+class_breaks5 <- c(floor(seq(min(hobo_inter$perc_90_day), max(hobo_inter$perc_90_day), length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("perc_90_day", style = "cont", breaks = class_breaks5, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks5, title = "Temp. [°C]") +
+  tm_layout(title = "percentile 90 day")
+   
+```
+#90th percentil night
+```{r}
+class_breaks6 <- c(floor(seq(min(hobo_inter$perc_90_night), max(hobo_inter$perc_90_night), length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("perc_90_night", style = "cont", breaks = class_breaks6, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks6, title = "Temp. [°C]") +
+  tm_layout(title = "percentile 90 night")
+   
+```
+
 # cleanup
 ```{r}
 dbDisconnect(con)
 ```
-
-
