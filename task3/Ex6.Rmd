@@ -1,0 +1,213 @@
+---
+title: "Exercise6 - Task3"
+output: html_document
+---
+
+## Load packages
+Check if needed packages are installed and loaded.
+```{r, echo=FALSE}
+if (!("RPostgreSQL" %in% installed.packages())){
+  install.packages("RPostgreSQL")
+}
+if (!("getPass" %in% installed.packages())){
+  install.packages("getPass")
+}
+if (!("tmap" %in% installed.packages())){
+  install.packages("tmap")
+}
+if (!("sf" %in% installed.packages())){
+  install.packages("sf")
+}
+if (!("tidyverse" %in% installed.packages())){
+  install.packages("tidyverse")
+}
+#if the installation of tmap package doesn't work like that, it has to be installed manually
+
+library(RPostgreSQL)
+library(getPass)
+library(tmap)
+library(sf)
+library(tidyverse)
+```
+
+## Connect to Server
+```{r}
+drv <- dbDriver('PostgreSQL')
+con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide the user'), 
+                 password=getPass('Provide the password'), dbname='datamanagement')
+```
+##See available tables
+```{r}
+dbListTables(con)
+```
+
+##Create view on hobos with temperature indices
+```{sql connection=con}
+CREATE VIEW indices AS
+SELECT id, hobo_id, radiation_influence, geom, description, year, srid, created_at, updated_at, mean_day, var_day, perc_90_day, mean_night, var_night, perc_90_night
+FROM
+  (SELECT hobo_id AS hobo, 
+    avg(temperature) AS mean_day,
+    variance(temperature) AS var_day,
+    percentile_cont(0.9) within GROUP (ORDER BY temperature) AS perc_90_day
+    FROM raw_data 
+    WHERE date_part('hour', tstamp) >= 6 AND date_part('hour', tstamp) < 18
+    GROUP BY hobo_id) AS day
+INNER JOIN 
+  (SELECT hobo_id AS hobo, 
+    avg(temperature) AS mean_night,
+    variance(temperature) AS var_night,
+    percentile_cont(0.9) within GROUP (ORDER BY temperature) AS perc_90_night
+    FROM raw_data 
+    WHERE date_part('hour', tstamp) < 6 OR date_part('hour', tstamp) >= 18
+    GROUP BY hobo_id) AS night
+ON day.hobo=night.hobo
+LEFT JOIN hobos
+ON hobos.id = night.hobo
+```
+
+#Take a look at the created view
+```{sql connection=con}
+SELECT * FROM indices
+```
+
+##Join districts with indices
+```{sql connection=con}
+SELECT name AS district,
+  avg(mean_day) AS mean_day,
+  avg(var_day) AS var_day,
+  avg(perc_90_day) AS perc_90_day,
+  avg(mean_night) AS mean_night,
+  avg(var_night) AS var_night,
+  avg(perc_90_night) AS perc_90_night
+  FROM (SELECT * FROM indices join districts on st_within(indices.geom, districts.geom)) AS test
+  GROUP BY name
+```
+
+##Make map
+
+### load data
+#### indices
+```{sql connection=con, output.var ="hobo"}
+select id, hobo_id, year, mean_day, var_day, perc_90_day, mean_night, var_night, perc_90_night, st_asewkt(st_transform(geom, 25832)) as "UTM" 
+from indices 
+```
+#### freiburg districts
+```{sql connection=con, output.var="fr_dis"}
+select id, name, st_asewkt(st_transform(geom, 25832)) as "UTM" 
+from districts 
+```
+#### freiburg districts indices
+```{sql connection=con, output.var = "fr_dis_indi"}
+SELECT name,
+  avg(mean_day) AS mean_day,
+  avg(var_day) AS var_day,
+  avg(perc_90_day) AS perc_90_day,
+  avg(mean_night) AS mean_night,
+  avg(var_night) AS var_night,
+  avg(perc_90_night) AS perc_90_night
+  FROM (SELECT * FROM indices join districts on st_within(indices.geom, districts.geom)) AS test
+  GROUP BY name
+```
+### creat sf objects
+```{r}
+fr_dis_indi <- left_join(fr_dis_indi, fr_dis, by = c("name"))
+fr_dis_indi_sf <- st_as_sf(fr_dis_indi, wkt = "UTM")
+hobo_sf <- st_as_sf(hobo, wkt = "UTM")
+fr_dis_sf <- st_as_sf(fr_dis, wkt = "UTM")
+hobo_inter <- st_intersection(hobo_sf, fr_dis_sf)
+```
+
+### mean day map
+```{r}
+class_breaks <- c(floor(seq(min(hobo_inter$mean_day), max(hobo_inter$mean_day), length.out = 8)),12)
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("mean_day", style = "cont", breaks = class_breaks, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "mean_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks, title = "Temp. [°C]") +
+  tm_layout(title = "mean day")
+   
+```
+
+##Selected indice
+As the average day temperature is the most intuitive parameter, it was chosen for visualisation. It creates a good overview over the spatial distribution. However, there are several uncertainties influencing the average day temperature, like the exposition, shielding etc. Therefore, a combination of mean, variance and 90th percentile would show a more complete picture.
+
+##Does the spatial aggregation to districts change the overall picture?
+The overall picture is definitely changed by the spatial aggregation. The amount of hobos per district varies as well as the area of the different districts. Especially in large suburban district with few hobos, one outlier can dominate a large area. On the other hand, a lot of measurements took place in smaller districts in the city center, which might therefore be more reliable but only represent a small area.
+
+#Maps of other indices:
+#mean night map
+```{r}
+class_breaks2 <- c(floor(seq(min(hobo_inter$mean_night), max(hobo_inter$mean_night), length.out = 8)),12)
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("mean_night", style = "cont", breaks = class_breaks2, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "mean_night", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks2, title = "Temp. [°C]", midpoint = NA) +
+  tm_layout(title = "mean night")
+   
+```
+#Variance day
+```{r}
+class_breaks3 <- c(floor(seq(min(hobo_inter$var_day, na.rm = T)-1, max(hobo_inter$var_day, na.rm = T)+1, length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("var_day", style = "cont", breaks = class_breaks3, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "var_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks3, title = "Variance [T²]") +
+  tm_layout(title = "var day")
+   
+```
+
+
+#Variance night
+```{r}
+class_breaks4 <- c(floor(seq(min(hobo_inter$var_night)-1, max(hobo_inter$var_night)+1, length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("var_night", style = "cont", breaks = class_breaks4, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "var_night", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks4, title = "Variance [T²]") +
+  tm_layout(title = "var night")
+   
+```
+#90th percetil day
+```{r}
+class_breaks5 <- c(floor(seq(min(hobo_inter$perc_90_day)-1, max(hobo_inter$perc_90_day)+1, length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("perc_90_day", style = "cont", breaks = class_breaks5, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks5, title = "Temp. [°C]") +
+  tm_layout(title = "percentile 90 day")
+   
+```
+#90th percentil night
+```{r}
+class_breaks6 <- c(floor(seq(min(hobo_inter$perc_90_night)-1, max(hobo_inter$perc_90_night)+1, length.out = 8)))
+tm_shape(fr_dis_indi_sf) +
+  tm_fill("perc_90_night", style = "cont", breaks = class_breaks6, legend.show = F) +
+  tm_borders() +
+    tm_text("name", just = "center", size = 0.7, col = "black") +
+tm_shape(hobo_inter) +
+  tm_dots(col = "perc_90_night", shape = 21, size = 0.4, style = "cont", 
+          breaks = class_breaks6, title = "Temp. [°C]") +
+  tm_layout(title = "percentile 90 night")
+   
+```
+
+# cleanup
+```{r}
+dbDisconnect(con)
+```
