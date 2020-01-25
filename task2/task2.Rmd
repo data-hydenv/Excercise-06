@@ -50,21 +50,18 @@ con <- dbConnect(drv, host='v45522.1blu.de', port=5432, user=getPass('Provide th
                  password=getPass('Provide the password'), dbname='datamanagement')
 ```
 
-## Solution
+
+# Solution
 
 This task is considered to be finished when the chunk below is producing the output requested in the task description. Change this section and add the neccessary code to produce the output.
 
 ```{sql connection=con}
-SELECT * FROM overview
+SELECT * FROM overview 
+ORDER by hobo_id ASC
 ```
 
 
-## See tables in db
-
-```{r}
-dbListTables(con)
-```
-
+# Single queries of the different attributes:
 
 ## count nr of raw data:
 
@@ -85,7 +82,7 @@ SELECT hobo_id, count(*) AS checked_data FROM quality_checked GROUP BY hobo_id O
 ```
 
 
-## hobos within 2km radius query in 2020
+## hobos within 2km radius in 2020
 ```{sql connection=con}
 SELECT a.hobo_id, count(b.hobo_id) AS within_2020
 FROM 
@@ -97,7 +94,7 @@ ORDER BY hobo_id DESC
 ```
 
 
-## hobos within 2km radius query
+## hobos within 2km radius
 
 ```{sql connection=con}
 SELECT a.hobo_id, count(b.hobo_id) AS within
@@ -112,16 +109,37 @@ ORDER BY hobo_id DESC
 
 ## used in year
 
-```{sql connection=con}
-SELECT hobo_id, year = 2020 AS used_in_2020,  year = 2018 AS used_in_2018, year = 2017 AS used_in_2017 FROM hobos
+```{sql connection = con}
+SELECT COALESCE(t1.hobo_id, u_2017.hobo_id) AS hobo_id, used_in_2020, used_in_2018, used_in_2017
+FROM
+  (SELECT COALESCE(u_2020.hobo_id, u_2018.hobo_id) as hobo_id, used_in_2020 IS TRUE AS used_in_2020, used_in_2018 IS TRUE AS used_in_2018
+  FROM
+    (SELECT hobo_id, year = 2020 AS used_in_2020
+    FROM hobos
+      WHERE year = 2020) u_2020
+    
+    FULL JOIN
+    
+      (SELECT hobo_id, year = 2018 AS used_in_2018
+      FROM hobos
+        WHERE year = 2018) u_2018
+    
+    ON u_2020.hobo_id = u_2018.hobo_id) t1
+    
+  FULL JOIN
+    (SELECT hobo_id, year = 2017 AS used_in_2017
+    FROM hobos
+      WHERE year = 2017) u_2017
+  ON t1.hobo_id = u_2017.hobo_id
+
+ORDER BY hobo_id ASC
 ```
 
 
 ## join queries and create view
 ```{sql connection = con}
 CREATE VIEW overview AS
-SELECT raw.hobo_id, raw.raw_data, checked.checked_data, w_2020.within_2020 AS within_2k_2020, w.within AS within_2k,
-u.used_in_2020, u.used_in_2018, u.used_in_2017
+SELECT raw.hobo_id, raw.raw_data, checked.checked_data , w_2020.within_2020 AS within_2k_2020, w.within AS within_2k, u.used_in_2020 IS TRUE AS used_in_2020, u.used_in_2018 IS TRUE AS used_in_2018, u.used_in_2017 IS TRUE AS used_in_2017 
 FROM 
   (SELECT t2.hobo_id, count(*) AS raw_data FROM raw_data t1
    LEFT JOIN 
@@ -153,51 +171,35 @@ LEFT JOIN
 ON raw.hobo_id = w.hobo_id
 
 LEFT JOIN
-  (SELECT hobo_id, year = 2020 AS used_in_2020,  year = 2018 AS used_in_2018, year = 2017 AS used_in_2017 FROM hobos) u
+  (SELECT COALESCE(t1.hobo_id, u_2017.hobo_id) AS hobo_id, used_in_2020, used_in_2018, used_in_2017
+FROM
+  (SELECT COALESCE(u_2020.hobo_id, u_2018.hobo_id) as hobo_id, used_in_2020 IS TRUE AS used_in_2020, used_in_2018 IS TRUE AS used_in_2018
+  FROM
+    (SELECT hobo_id, year = 2020 AS used_in_2020
+    FROM hobos
+      WHERE year = 2020) u_2020
+    
+    FULL JOIN
+    
+      (SELECT hobo_id, year = 2018 AS used_in_2018
+      FROM hobos
+        WHERE year = 2018) u_2018
+    
+    ON u_2020.hobo_id = u_2018.hobo_id) t1
+    
+  FULL JOIN
+    (SELECT hobo_id, year = 2017 AS used_in_2017
+    FROM hobos
+      WHERE year = 2017) u_2017
+  ON t1.hobo_id = u_2017.hobo_id) u
 ON raw.hobo_id = u.hobo_id
 
+ORDER BY hobo_id ASC
+
 ```   
-   
-   
-## some helper queries to figure out stuff:
-
-```{sql connection = con}
-
-SELECT hobo_id, st_asewkt(st_union(geom)) AS geom, year FROM hobo GROUP BY hobo_id, year ORDER BY hobo_id ASC
 
 
-```
-
-
-```{sql connection = con}
-
-SELECT a.hobo_id, b.hobo_id AS b_id, st_asewkt(b.geom) AS geom
-FROM 
-    (SELECT hobo_id, st_union(geom) AS geom FROM hobo GROUP BY hobo_id) a,
-    (SELECT hobo_id, geom AS geom FROM hobo) b 
-WHERE st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) AND a.hobo_id = 10350083
-ORDER BY b_id DESC
-
-```
-
-
-```{sql connection = con}
-
-select *
-from 
-    hobos a, hobos b 
-where st_dwithin(st_transform(a.geom, 25832), st_transform(b.geom, 25832), 2000) and a.hobo_id != b.hobo_id 
-
-```
-
-### union geometries of hobo devices
-```{sql connection = con}
-SELECT hobo_id, st_astext(st_union(geom)) AS geom FROM hobo GROUP BY hobo_id
-```
-
-
-
-## Hints
+# Hints
 
 The follwoing chunks might help you to get started.
 
