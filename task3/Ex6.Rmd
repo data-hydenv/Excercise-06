@@ -21,6 +21,9 @@ if (!("sf" %in% installed.packages())){
 if (!("tidyverse" %in% installed.packages())){
   install.packages("tidyverse")
 }
+if (!("classInt" %in% installed.packages())){
+  install.packages("classInt")
+}
 #if the installation of tmap package doesn't work like that, it has to be installed manually
 
 library(RPostgreSQL)
@@ -28,6 +31,7 @@ library(getPass)
 library(tmap)
 library(sf)
 library(tidyverse)
+library(classInt)
 ```
 
 ## Connect to Server
@@ -118,16 +122,27 @@ fr_dis_sf <- st_as_sf(fr_dis, wkt = "UTM")
 hobo_inter <- st_intersection(hobo_sf, fr_dis_sf)
 ```
 
+### classification of the indices
+The color-classes of the maps are calculated by the *Jenks-Caspall-algorithm* that try to minimize the differences within a class and maximize the differences between classes. For the districts and HOBO-series one common color-classification is chosen.
+```{r}
+class_breaks <- classIntervals(hobo_sf$mean_day, n = 5, style = "jenks")$brks
+class_breaks3 <- classIntervals(hobo_sf$var_day, n = 5, style = "jenks")$brks
+class_breaks5 <- classIntervals(hobo_sf$perc_90_day, n = 5, style = "jenks")$brks
+class_breaks2 <- classIntervals(hobo_sf$mean_night, n = 5, style = "jenks")$brks
+class_breaks4 <- classIntervals(hobo_sf$var_night, n = 5, style = "jenks")$brks
+class_breaks6 <- classIntervals(hobo_sf$perc_90_night, n = 5, style = "jenks")$brks
+```
+
+
 ### mean day map
 ```{r}
-class_breaks <- c(floor(seq(min(hobo_inter$mean_day), max(hobo_inter$mean_day), length.out = 8)),12)
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("mean_day", style = "cont", breaks = class_breaks, legend.show = F) +
+  tm_fill("mean_day", style = "jenks",  legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "mean_day", shape = 21, size = 0.4, style = "cont", 
-          breaks = class_breaks, title = "Temp. [°C]") +
+  tm_dots(col = "mean_day", shape = 21, size = 0.4, style = "jenks", 
+          title = "Temp. [°C]") +
   tm_layout(title = "mean day")
    
 ```
@@ -141,26 +156,25 @@ The overall picture is definitely changed by the spatial aggregation. The amount
 #Maps of other indices:
 #mean night map
 ```{r}
-class_breaks2 <- c(floor(seq(min(hobo_inter$mean_night), max(hobo_inter$mean_night), length.out = 8)),12)
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("mean_night", style = "cont", breaks = class_breaks2, legend.show = F) +
+  tm_fill("mean_night", style = "fixed", breaks = class_breaks2, palette = "Oranges", legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "mean_night", shape = 21, size = 0.4, style = "cont", 
-          breaks = class_breaks2, title = "Temp. [°C]", midpoint = NA) +
+  tm_dots(col = "mean_night", shape = 21, size = 0.4, style = "fixed", 
+          breaks = class_breaks2, palette = "Oranges", title = "Temp. [°C]", midpoint = NA) +
   tm_layout(title = "mean night")
    
 ```
 #Variance day
 ```{r}
-class_breaks3 <- c(floor(seq(min(hobo_inter$var_day, na.rm = T)-1, max(hobo_inter$var_day, na.rm = T)+1, length.out = 8)))
+
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("var_day", style = "cont", breaks = class_breaks3, legend.show = F) +
+  tm_fill("var_day", style = "fixed", breaks = class_breaks3, legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "var_day", shape = 21, size = 0.4, style = "cont", 
+  tm_dots(col = "var_day", shape = 21, size = 0.4, style = "fixed", 
           breaks = class_breaks3, title = "Variance [T²]") +
   tm_layout(title = "var day")
    
@@ -169,39 +183,38 @@ tm_shape(hobo_inter) +
 
 #Variance night
 ```{r}
-class_breaks4 <- c(floor(seq(min(hobo_inter$var_night)-1, max(hobo_inter$var_night)+1, length.out = 8)))
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("var_night", style = "cont", breaks = class_breaks4, legend.show = F) +
+  tm_fill("var_night", style = "fixed", breaks = class_breaks4, legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "var_night", shape = 21, size = 0.4, style = "cont", 
+  tm_dots(col = "var_night", shape = 21, size = 0.4, style = "fixed", 
           breaks = class_breaks4, title = "Variance [T²]") +
   tm_layout(title = "var night")
    
 ```
 #90th percetil day
 ```{r}
-class_breaks5 <- c(floor(seq(min(hobo_inter$perc_90_day)-1, max(hobo_inter$perc_90_day)+1, length.out = 8)))
+
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("perc_90_day", style = "cont", breaks = class_breaks5, legend.show = F) +
+  tm_fill("perc_90_day", style = "fixed", breaks = class_breaks5, legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "cont", 
+  tm_dots(col = "perc_90_day", shape = 21, size = 0.4, style = "fixed", 
           breaks = class_breaks5, title = "Temp. [°C]") +
   tm_layout(title = "percentile 90 day")
    
 ```
 #90th percentil night
 ```{r}
-class_breaks6 <- c(floor(seq(min(hobo_inter$perc_90_night)-1, max(hobo_inter$perc_90_night)+1, length.out = 8)))
+
 tm_shape(fr_dis_indi_sf) +
-  tm_fill("perc_90_night", style = "cont", breaks = class_breaks6, legend.show = F) +
+  tm_fill("perc_90_night", style = "fixed", breaks = class_breaks6, legend.show = F) +
   tm_borders() +
     tm_text("name", just = "center", size = 0.7, col = "black") +
 tm_shape(hobo_inter) +
-  tm_dots(col = "perc_90_night", shape = 21, size = 0.4, style = "cont", 
+  tm_dots(col = "perc_90_night", shape = 21, size = 0.4, style = "fixed", 
           breaks = class_breaks6, title = "Temp. [°C]") +
   tm_layout(title = "percentile 90 night")
    
